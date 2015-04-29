@@ -1,0 +1,5 @@
+cern-get-sso-cookie (0.5.2-1) unstable; urgency=medium
+
+  * Initial release.
+
+ -- Alexander Baranov <sashab1@yandex-team.ru>  Wed, 22 Apr 2015 10:10:18 +0300

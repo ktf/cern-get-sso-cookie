@@ -1,0 +1,14 @@
+# Ignore debian-ish things
+
+*.deb
+*.substvars
+*.dsc
+*.gz
+*.build
+*.changes
+*.debhelper
+*.log
+
+cern-get-sso-cookie/debian/cern-get-sso-cookie
+libauthen-krb5-perl/debian/libauthen-krb5-perl
+libwww-curl-perl/debian/libwww-curl-perl
