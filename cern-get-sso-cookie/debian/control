@@ -7,6 +7,6 @@ Standards-Version: 3.9.3
 
 Package: cern-get-sso-cookie
 Architecture: any
-Depends: ${perl:Depends}, ${misc:Depends}, libwww-curl-perl, libauthen-krb5-perl
+Depends: ${perl:Depends}, ${misc:Depends}, libauthen-krb5-perl
 X-Python-Version: all
 Description: Deb-version of cern-get-sso-cookie-0.5.2-1.slc5.noarch http://linuxsoft.cern.ch/cern/slc5X/i386/yum/extras/repoview/cern-get-sso-cookie.html
