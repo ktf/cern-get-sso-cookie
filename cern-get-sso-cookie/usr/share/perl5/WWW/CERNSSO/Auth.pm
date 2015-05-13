@@ -25,7 +25,7 @@ use constant CERN_SSO_CURL_USER_AGENT_CERT => 'curl-sso-certificate/'.VERSION. '
 use constant CERN_SSO_CURL_ADFS_EP => '/adfs/ls';
 use constant CERN_SSO_CURL_ADFS_SIGNIN => 'wa=wsignin1.0';
 use constant CERN_SSO_CURL_AUTHERR => 'HTTP Error 401.2 - Unauthorized';
-use constant CERN_SSO_CURL_CAPATH => '/etc/pki/tls/certs/';
+use constant CERN_SSO_CURL_CAPATH => '/etc/ssl/certs';
 
 use constant CURLAUTH_GSSNEGOTIATE => (1 << 2); # not defined in WWW::Curl .. nor in Net::Curl
 use constant CURLCERTINFO => (0x400000 + 32); #not defined on SLC5 CURLINFO_CERTINFO
