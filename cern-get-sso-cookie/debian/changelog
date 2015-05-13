@@ -1,3 +1,10 @@
+cern-get-sso-cookie (0.5.2-2) unstable; urgency=medium
+
+  * Use debian certificate dir '/etc/ssl/certs'
+  * Dependency on proper version of libwww-curl
+
+ -- Alexander Baranov <sashab1@trusty.cern.dev.yandex.net>  Thu, 14 May 2015 00:41:18 +0300
+
 cern-get-sso-cookie (0.5.2-1) unstable; urgency=medium
 
   * Initial release.
