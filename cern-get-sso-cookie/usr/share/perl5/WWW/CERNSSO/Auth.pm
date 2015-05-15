@@ -33,15 +33,14 @@ use constant FALSE => 0;
 use constant TRUE  => 1;
 
 my $setcurlout = sub {
- my($self)=@_;
- close($self->{_OUTFILE}) if ($self->{_OUTFILE});
- open($self->{_OUTFILE},">",\$self->{_OUTDATA});
- $self->{_CH}->setopt(CURLOPT_WRITEDATA,\$self->{_OUTFILE});
- close($self->{_HEADFILE}) if ($self->{_HEADFILE});
- open($self->{_HEADFILE},">",\$self->{_HEADDATA});
- $self->{_CH}->setopt(CURLOPT_WRITEHEADER,\$self->{_HEADFILE});
+my($self,$OFH,$HFH)=@_;
+close($OFH) if ($OFH);
+open($OFH,">",\$self->{_OUTDATA});
+$self->{_CH}->setopt(CURLOPT_WRITEDATA,$OFH);
+close($HFH) if ($HFH);
+open($HFH,">",\$self->{_HEADDATA});
+$self->{_CH}->setopt(CURLOPT_WRITEHEADER,$HFH);
 };
-
 
 my $getinfo = sub {
  my($self)=@_;
@@ -176,8 +175,8 @@ $self;
 
 sub DESTROY {
  my($self)=@_;
- close($self->{_OUTFILE}) if ($self->{_OUTFILE});
- close($self->{_HEADFILE}) if ($self->{_HEADFILE}); 
+ #close($self->{_OUTFILE}) if ($self->{_OUTFILE});
+ #close($self->{_HEADFILE}) if ($self->{_HEADFILE});
 }
 
 sub reprocess {
@@ -234,13 +233,14 @@ sub formstring {
 sub curl {
  my($self,$url,%formdata) = @_;
  my($info_url,$ret);
+ my($OFH,$HFH);
 
 # if (!defined(%formdata)) {};
  my $formstring=$self->formstring(%formdata);
  $self->{_CH}->setopt(CURLOPT_URL,$url);
  $self->{_CH}->setopt(CURLOPT_POSTFIELDS, $formstring);
  $self->{_CH}->setopt(CURLOPT_POSTFIELDSIZE, length($formstring));
- $self->$setcurlout();
+ $self->$setcurlout($OFH,$HFH);
  print STDERR "CERNSSO: Requesting URL ($url" if ($self->{_DEBUG}); 
  print STDERR "/?$formstring" if ($self->{_DEBUG} && length($formstring));
  print STDERR ").\n" if ($self->{_DEBUG}); 
@@ -263,7 +263,7 @@ if ( $info_url =~/${\(CERN_SSO_CURL_ADFS_EP)}/) {
   
   $self->{_CH}->setopt(CURLOPT_URL,$info_url);
   $self->{_CH}->setopt(CURLOPT_POST,1);
-  $self->$setcurlout();
+  $self->$setcurlout($OFH,$HFH);
   $ret=$self->{_CH}->perform;
   if ($ret) {
    print STDERR "CERNSSO Error: ".$self->{_CH}->strerror($ret)." (".$self->{_CH}->errbuf.")\n" if ($self->{_DEBUGCURL});
@@ -304,7 +304,7 @@ if ( $info_url =~/${\(CERN_SSO_CURL_ADFS_EP)}/) {
     $self->{_CH}->setopt(CURLOPT_URL, $url_sp);
     $self->{_CH}->setopt(CURLOPT_POSTFIELDS, join('&',@forms));
     $self->{_CH}->setopt(CURLOPT_POSTFIELDSIZE, length(join('&',@forms)));
-    $self->$setcurlout();
+    $self->$setcurlout($OFH,$HFH);
     $self->{_CH}->perform;
 
 #
@@ -316,7 +316,7 @@ if ( $info_url =~/${\(CERN_SSO_CURL_ADFS_EP)}/) {
     print STDERR ").\n" if ($self->{_DEBUG}); 
     $self->{_CH}->setopt(CURLOPT_POSTFIELDS, $formstring);
     $self->{_CH}->setopt(CURLOPT_POSTFIELDSIZE, length($formstring));
-    $self->$setcurlout();
+    $self->$setcurlout($OFH,$HFH);
     $ret=$self->{_CH}->perform;
     if ($ret) {
      print STDERR "CERNSSO Error: ".$self->{_CH}->strerror($ret)." (".$self->{_CH}->errbuf.")\n" if ($self->{_DEBUGCURL});
