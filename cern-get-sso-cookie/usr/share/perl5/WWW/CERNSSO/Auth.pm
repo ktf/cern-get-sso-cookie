@@ -1,8 +1,9 @@
 #
-#
 # access CERN SSO protected pages using curl-like interface
 #
+# v. 0.5.3 - 20.05.2015 Jaroslaw.Polok@cern.ch
 #
+
 package WWW::CERNSSO::Auth;
 
 use strict;
@@ -15,7 +16,7 @@ use File::Temp qw(tempfile);
 use vars qw(@ISA);
 use Data::Dumper;
 
-use constant VERSION => '0.5.1';
+use constant VERSION => '0.5.5';
 
 use constant CERN_SSO_HTTPONLY => '#HttpOnly_';
 use constant CERN_SSO_COOKIE_LIFETIME => 86400;
@@ -33,14 +34,17 @@ use constant FALSE => 0;
 use constant TRUE  => 1;
 
 my $setcurlout = sub {
-my($self,$OFH,$HFH)=@_;
-close($OFH) if ($OFH);
-open($OFH,">",\$self->{_OUTDATA});
-$self->{_CH}->setopt(CURLOPT_WRITEDATA,$OFH);
-close($HFH) if ($HFH);
-open($HFH,">",\$self->{_HEADDATA});
-$self->{_CH}->setopt(CURLOPT_WRITEHEADER,$HFH);
+ my($self,$OFH,$HFH)=@_;
+
+ close($OFH) if ($OFH);
+ open($OFH,">",\$self->{_OUTDATA});
+ $self->{_CH}->setopt(CURLOPT_WRITEDATA,$OFH);
+
+ close($HFH) if ($HFH);
+ open($HFH,">",\$self->{_HEADDATA});
+ $self->{_CH}->setopt(CURLOPT_WRITEHEADER,$HFH);
 };
+
 
 my $getinfo = sub {
  my($self)=@_;
@@ -78,9 +82,7 @@ sub new {
                     _DEBUG => undef,
 		    _DEBUGCURL => undef, 
                     _OUTDATA => undef,
-                    _OUTFILE => undef,
                     _HEADDATA => undef,
-                    _HEADFILE => undef,
                     _SSO_COOKIEFH => undef,
                     _SSO_COOKIEFILE => undef,
 		    _CURL_PRIVDATA => undef,
@@ -165,7 +167,7 @@ if ($self->{_DEBUGCURL}) {
 }
 $self->{_CH}->setopt(CURLOPT_HEADER,0);
 $self->{_CH}->setopt(CURLINFO_HEADER_OUT,1);
-$self->{_CH}->setopt(CURLOPT_TIMEOUT,10); # this should not be needed, but sometimes requests hang 'forever'
+$self->{_CH}->setopt(CURLOPT_TIMEOUT,30); # this should not be needed, but sometimes requests hang 'forever'
 $self->{_CH}->setopt(CURLOPT_CONNECTTIMEOUT,10); # this should not be needed, but sometimes requests hang 'forever'
 
 
@@ -173,11 +175,11 @@ $self->{_CH}->setopt(CURLOPT_CONNECTTIMEOUT,10); # this should not be needed, bu
 $self;
 }
 
-sub DESTROY {
- my($self)=@_;
- #close($self->{_OUTFILE}) if ($self->{_OUTFILE});
- #close($self->{_HEADFILE}) if ($self->{_HEADFILE});
-}
+#sub DESTROY {
+# my($self)=@_;
+# close($self->{_OUTFILE}) if ($self->{_OUTFILE});
+# close($self->{_HEADFILE}) if ($self->{_HEADFILE}); 
+#}
 
 sub reprocess {
  my ($self,$outf)= @_;
@@ -232,8 +234,7 @@ sub formstring {
 
 sub curl {
  my($self,$url,%formdata) = @_;
- my($info_url,$ret);
- my($OFH,$HFH);
+ my($info_url,$ret,$OFH,$HFH);
 
 # if (!defined(%formdata)) {};
  my $formstring=$self->formstring(%formdata);
@@ -260,9 +261,23 @@ sub curl {
 if ( $info_url =~/${\(CERN_SSO_CURL_ADFS_EP)}/) {
 
   print STDERR "CERNSSO: Redirected to IDP ($info_url).\n" if ($self->{_DEBUG});
-  
+
   $self->{_CH}->setopt(CURLOPT_URL,$info_url);
   $self->{_CH}->setopt(CURLOPT_POST,1);
+
+# Note: at this point the SSO server asks for 'Negotiate' auth and .... rejects 
+# it when presented by libcurl .. what it really wants is a cookie ..
+# until 7.19.7-46.el6 it was not a problem since Negotiate connections
+# were NOT closed , but patch for CVE-2015-3148 changed that.
+# .. so in order to prevent libcurl sending already present 'Authorization' header
+# we reset 'user' and 'password' here.
+# note: setting CURLOPT_HTTPAUTH to 0 (or any other value ..) does not help ..
+# libcurl still sends 'Authorization' header ... 
+
+  $self->{_CH}->setopt(CURLOPT_USERPWD,undef);
+
+
+
   $self->$setcurlout($OFH,$HFH);
   $ret=$self->{_CH}->perform;
   if ($ret) {
@@ -330,7 +345,8 @@ if ( $info_url =~/${\(CERN_SSO_CURL_ADFS_EP)}/) {
 # segfaults in perl-WWW-Curl < 4.15: https://rt.cpan.org/Public/Bug/Display.html?id=62976 
 # $self->{_CH}->getinfo(CURLINFO_PRIVATE);
  
- $self->{_CH}->close;
+# undef in perl-WWW-Curl 4.17 ??
+# $self->{_CH}->close;
 
  my $res = TRUE;
 #
