@@ -29,7 +29,6 @@ use constant CERN_SSO_CURL_AUTHERR => 'HTTP Error 401.2 - Unauthorized';
 use constant CERN_SSO_CURL_CAPATH => '/etc/ssl/certs';
 
 use constant CURLAUTH_GSSNEGOTIATE => (1 << 2); # not defined in WWW::Curl .. nor in Net::Curl
-use constant CURLCERTINFO => (0x400000 + 32); #not defined on SLC5 CURLINFO_CERTINFO
 use constant FALSE => 0;
 use constant TRUE  => 1;
 
@@ -69,7 +68,6 @@ my $getinfo = sub {
    'upload_content_length'   => $self->{_CH}->getinfo(CURLINFO_CONTENT_LENGTH_UPLOAD),
    'starttransfer_time'      => $self->{_CH}->getinfo(CURLINFO_STARTTRANSFER_TIME),
    'redirect_time'           => $self->{_CH}->getinfo(CURLINFO_REDIRECT_TIME),
-   'certinfo'                => $self->{_CH}->getinfo(CURLCERTINFO),
    'request_header'          => $self->{_CH}->getinfo(CURLINFO_HEADER_OUT),
  );
 return (\%rethash);
