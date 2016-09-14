@@ -75,7 +75,7 @@ return (\%rethash);
 
 
 sub new {
- my($class,$cookiefile,$krb,$sslnoverify,$cert,$key,$cacert,$capath,$verbose,$debug) = @_;
+ my($class,$cookiefile,$krb,$sslnoverify,$cert,$key,$cacert,$capath,$verbose,$debug,$password) = @_;
  my($self) = bless {_CH => undef,
                     _DEBUG => undef,
 		    _DEBUGCURL => undef, 
@@ -113,18 +113,30 @@ if(defined($sslnoverify) && $sslnoverify==1) {
  } else {
   print STDERR "CERNSSO: Using Certificate/Key to authenticate.\n" if ($self->{_DEBUG});
   $self->{_CH}->setopt(CURLOPT_USERAGENT,CERN_SSO_CURL_USER_AGENT_CERT);
-  
-  if (!defined($cert) || !defined($key)) {
-   print STDERR "CERNSSO: Error: Missing certificate/key\n."; exit 1;
+
+  if (!defined($cert)) {
+   print STDERR "CERNSSO: Error: Missing certificate\n."; exit 1;
   }
-  
   $self->{_CH}->setopt(CURLOPT_SSLCERT,$cert);
   print STDERR "CERNSSO: CERT: $cert\n" if ($self->{_DEBUG});
-  #$self->{_CH}->setopt(CURLOPT_SSLCERTTYPE,"PEM");
-  $self->{_CH}->setopt(CURLOPT_SSLKEY,$key);
-  print STDERR "CERNSSO: KEY: $key\n" if ($self->{_DEBUG});
-  #$self->{_CH}->setopt(CURLOPT_SSLKEYTYPE, "PEM");
-  #$self->{_CH}->setopt(CURLOPT_SSLKEYPASSWD, XXX);
+
+  # If certificate not a .p12 complain about the missing key.
+  if (!($cert =~ /.*[.]p12$/) && !defined($key)) {
+   print STDERR "CERNSSO: Error: Missing key\n."; exit 1;
+  }
+
+  # Only PEM certificates have a key. p12 ones need a password.
+  if (!defined($key)) {
+   $self->{_CH}->setopt(CURLOPT_SSLKEY,$key);
+   print STDERR "CERNSSO: KEY: $key\n" if ($self->{_DEBUG});
+   $self->{_CH}->setopt(CURLOPT_SSLKEYTYPE, "PEM");
+  } else {
+   $self->{_CH}->setopt(CURLOPT_SSLKEYTYPE, "P12");
+  }
+
+  if (defined($password)) {
+   $self->{_CH}->setopt(CURLOPT_SSLKEYPASSWD, $password);
+  }
  }
 
 if(defined($cookiefile)) {

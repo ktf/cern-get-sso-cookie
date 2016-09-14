@@ -69,7 +69,7 @@ sub krbcheck {
 # do the job
 #
 
-my($debug,$verbose,$outfile,$nocertverify,$krb,$cert,$key,$capath,$cacert,$help,$url,$reprocess,$nover,$wget,$res,$out,$err);
+my($debug,$verbose,$outfile,$nocertverify,$krb,$cert,$key,$capath,$cacert,$help,$url,$reprocess,$nover,$wget,$res,$out,$err,$password);
 
 my %opts=(
 	"verbose"	=> \$verbose,
@@ -78,6 +78,7 @@ my %opts=(
 	"krb"		=> \$krb,
 	"cert=s"	=> \$cert,
 	"key=s"		=> \$key,
+	"password=s"	=> \$password,
 	"capath=s"	=> \$capath,
 	"cacert=s"	=> \$cacert,
 	"help"		=> \$help,
@@ -96,13 +97,11 @@ errorout("-k(rb) and -c(ert) options are mutually exclusive, see cern-get-sso-co
 
 if ($cert) { $krb=0; } else { $krb=1; krbcheck(); }
 
-errorout("-c(cert) and -k(ey) options must be both specified, see cern-get-sso-cookie --help for help.",1) if (($cert && !$key) || ($key && !$cert));
-
 errorout("-o(ut) cookiefile.txt option is mandatory, see get-cern-sso-cookie --help for help.",1) unless ($outfile);
 
 if ($nocertverify) { $nover=1; } else { $nover=0; }
 
-$wget=WWW::CERNSSO::Auth->new($outfile,$krb,$nover,$cert,$key,$cacert,$capath,$verbose,$debug);
+$wget=WWW::CERNSSO::Auth->new($outfile,$krb,$nover,$cert,$key,$cacert,$capath,$verbose,$debug,$password);
 
 
 ($res,$out,$err)=$wget->curl($url);
